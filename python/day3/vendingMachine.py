@@ -7,7 +7,7 @@ nameList = []
 while looper:
 
     try:
-        if money == 0:
+        if money < 100:
             print('커피(300원), 생수(100원), 쥬스(700원), 우유(200원)를 선택하실 수 있습니다.')
             money = int(input('돈을 넣으세요 -> '))
         
