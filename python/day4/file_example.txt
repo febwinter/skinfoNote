@@ -1,0 +1,4 @@
+First line of text
+Second line of text
+Third line of text
+텍스트의 네번째 줄입니다.
