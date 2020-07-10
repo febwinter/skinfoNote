@@ -1,4 +1,6 @@
 from typing import List # 반환값을 전달하기 위해서 import 함
+import os
+import report # generate_report()
 
 def runSungjuk()->list:
     for user in sungjuk:
@@ -13,6 +15,12 @@ def runSungjuk()->list:
    #  newList = sungjuk.items() # --> ('User1', [100, 90, 80, 270, 90]) 형태의 이중 리스트
 
     newList = sorted(sungjuk.items(), key=lambda u: u[1][3], reverse=True)
+    '''
+    lambda 함수 :
+    Lambda x : 표현식
+    위의 예제에서는 sorted 매서드의 key 파라미터 u에 대해서 Lambda를 써서 넘기는 예제이다.
+    u는 sungjuk.items()가 오게 되고 Lambda함수를 통해서 u[1][3]에 해당하는 총점을 키값으로 사용한다.
+    '''
 
     return newList
     
@@ -33,23 +41,28 @@ def seperateGrade(data):
 
 
 sungjuk = {}
-sungjuk['USER1'] = [88,70,99]
-sungjuk['USER2'] = [78,100,77]
-sungjuk['USER3'] = [100,90,80]
-sungjuk['USER4'] = [99,80,66]
+# sungjuk['USER1'] = [88,70,99]
+# sungjuk['USER2'] = [78,100,77]
+# sungjuk['USER3'] = [100,90,80]
+# sungjuk['USER4'] = [99,80,66]
 
 # 국어, 영어, 수학, 총점, 평균, 석차
 
 # 성적, 출력, 조회, 종료
-
-
+'''
+이름, 총점, 평균만을  표시하는 report.csv 파일을 생성하시오
+ex) 
+이름, 총점, 평균
+USER1,270,90,90
+USER2,254,84,67
+'''
 
 while True:
     print('## 현재 등록자 수 : {}'.format(len(sungjuk)))
     # 1 ~ 4 입력 허용
     # 입력값을 int()로 casting
     try:
-        cmd = int(input('1) 성적 입력\n2) 성적 출력\n3) 성적 조회\n4) 성적 저장\n5) 성적 불러오기\n9) 종료\n## 1 ~ 9 에서 선택해 입력하세요 : '))
+        cmd = int(input('1) 성적 입력\n2) 성적 출력\n3) 성적 조회\n4) 성적 저장\n5) 성적 불러오기\n6) 리포트 출력\n9) 종료\n## 1 ~ 9 에서 선택해 입력하세요 : '))
     except:
         print('** 명령어는 1 ~ 9 사이의 숫자만 입력해 주세요 **')
         continue
@@ -120,12 +133,30 @@ while True:
 
     elif cmd == 4: # 성적 파일 저장
         with open('sungjuk.dat','w',encoding='utf-8')  as file:
-            calculatedSungjuk = runSungjuk()
-            print(sungjuk)
+            calculatedSungjuk = runSungjuk() # 총점, 평균 안들어간 데이터들 입력 -> 리스트 반환
+            for element in calculatedSungjuk: # 각 유저별 데이터가 List의 형태로 element에 들어감
+                _name = element[0]              # 0 번째 인덱스에 유저 이름이 들어감 그 뒤로 국,영,수,총점,평균 이 들어감
+                file.write(_name+',')
+                _nums = element[1] 
+                for _number in _nums:
+                    file.write('{},'.format(_number))
+                file.write('\n')
             print('++ 파일에 저장 하였습니다.')
 
     elif cmd == 5: # 성적 파일 읽어오기
-        print('파일을 불러왔습니다.')
+        tempSungjuk = []
+        with open('sungjuk.dat','r',encoding='utf-8') as file:
+            for line in file:
+                # sungjuk['USER1'] = [100,90,80,총점,평균]
+                _values = line.split(',')
+                sungjuk[_values[0]] = [int(_values[1]),int(_values[2]),int(_values[3]),int(_values[4]),float(_values[5])]
+        print('++ 파일을 읽어왔습니다.')
+
+    elif cmd == 6: # csv 파일 생성
+        dir = os.path.dirname(os.path.realpath(__file__))
+        inFile = dir + '/sungjuk.dat'
+        outFile = dir + '/report.csv'
+        report.generate_report(inFile,outFile) # 매서드 호출
 
     elif cmd == 9: # 종료
         quit()
