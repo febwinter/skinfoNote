@@ -5,7 +5,7 @@ import heapq
 
 # place 에 연결된 
 def sortPath(path: dict, place: str)->dict: 
-    return sorted(path[place], key=lambda u: u[1]) # ex) {'미용실':5, '슈퍼마켓':10, '학원':9 }
+    return dict(sorted(path[place].items(), key=lambda u: u[1])) # ex) {'미용실':5, '슈퍼마켓':10, '학원':9 }
 
 # 최장거리보다 큰 경로를 계산해주는 함수
 def makeInf(paht:dict)->int:
@@ -39,15 +39,16 @@ def dijkstra(path: dict, start, end)->int:
         nodeName = nodeQueue.get()
         tempPath = sortPath(path,nodeName)
 
-        for key, value in tempPath.items: # 꺼낸 노드와 연결된 노드를 경로가 짧은 순서대로 이름을 넣는다.
-            nodeQueue.put(key)
-            nodeCheck[key] = True # 큐에 넣은 노드를 체크한다.
+        for key, value in tempPath.items(): # 꺼낸 노드와 연결된 노드를 경로가 짧은 순서대로 이름을 넣는다.
+            if nodeCheck[key] != True:
+                nodeQueue.put(key)
+                nodeCheck[key] = True # 큐에 넣은 노드를 체크한다.
         
             # 최단거리 계산 : min(dist[A] + D[A][B], dist[B]) (현재 노드까지 최단거리 + 다음 노드까지 거리와 기존 다음 노드까지 최단거리)
             dist[key] = min(dist[nodeName] + value, dist[key])
 
     return dist[end]
-
+# path = { "집": {"미용실":5, "슈퍼마켓":10, "학원":9}, "미용실": {"집":5, "슈퍼마켓": 3, "은행":11}, "슈퍼마켓": {"집":10, "미용실":3, "레스토랑":3, "은행":10, "학원":7}, "학원": {"집":9, "슈퍼마켓":7, "커피숍":8, "레스토랑":3}, "은행": {"미용실":11, "슈퍼마켓":10, "커피숍":5}, "레스토랑": {"슈퍼마켓":3, "커피숍":3, "학원":3}, "커피숍": {"레스토랑":3, "은행":5, "학원":8} }
 # 경로
 path = { "집": {"미용실":5, "슈퍼마켓":10, "학원":9}, "미용실": {"집":5, "슈퍼마켓": 3, "은행":11}, "슈퍼마켓": {"집":10, "미용실":3, "레스토랑":3, "은행":10, "학원":7}, "학원": {"집":9, "슈퍼마켓":7, "커피숍":8}, "은행": {"미용실":11, "슈퍼마켓":10, "커피숍":5}, "레스토랑": {"슈퍼마켓":3, "커피숍":3}, "커피숍": {"레스토랑":3, "은행":5, "학원":8} }
 
@@ -55,9 +56,9 @@ path = { "집": {"미용실":5, "슈퍼마켓":10, "학원":9}, "미용실": {"�
 while True:
     try:
         start = input('출발지를 입력하시오 : ')
-        list(path.keys).index(start)
+        list(path.keys()).index(start)
         end = input('도착지를 입력하시오 : ')
-        list(path.keys).index(end)
+        list(path.keys()).index(end)
         break
 
     except:
