@@ -1,7 +1,5 @@
 # 다익스트라 알고리즘
 from queue import Queue
-from queue import PriorityQueue
-import heapq
 
 # place 에 연결된 
 def sortPath(path: dict, place: str)->dict: 
@@ -67,66 +65,3 @@ while True:
 shortcut = dijkstra(path, start, end)
 
 print('{}부터 {}까지의 최단 경로의 길이는 {}이다.'.format(start, end, shortcut))
-
-
-
-
-
-
-# # 그래프의 시작 정점의 거리는 0으로 초기화 해줌
-# dist[start] = [0, start]
-
-# # 모든 정점이 저장될 큐를 생성합니다.
-# queue = []
-
-# # 그래프의 시작 정점과 시작 정점의 거리(0)을 최소힙에 넣어줌
-# heapq.heappush(queue, [dist[start][0], start])
-
-# while queue:
-    
-#     # 큐에서 정점을 하나씩 꺼내 인접한 정점들의 가중치를 모두 확인하여 업데이트합니다.
-#     current_distance, current_vertex = heapq.heappop(queue)
-    
-#     # 더 짧은 경로가 있다면 무시한다.
-#     if dist[current_vertex][0] < current_distance:
-#         continue
-        
-#     for adjacent, weight in path[current_vertex].items():
-#         distance = current_distance + weight
-#         # 만약 시작 정점에서 인접 정점으로 바로 가는 것보다 현재 정점을 통해 가는 것이 더 가까울 경우에는
-#         if distance < dist[adjacent][0]:
-#             # 거리를 업데이트합니다.
-#             dist[adjacent] = [distance, current_vertex]
-#             heapq.heappush(queue, [distance, adjacent])
-
-# path = end
-# path_output = end + '->'
-# while dist[path][1] != start:
-#     path_output += dist[path][1] + '->'
-#     path = dist[path][1]
-# path_output += start
-# print (path_output)
-# print(dist)
-
-
-
-# numPlaces = len(path) # 장소의 갯수
-
-
-
-# # 최단거리 저장용 dictionary 변수
-# spots = list(path.values())
-# dist = {place: [inf] for place in spots}
-
-# print(dist)
-
-
-
-
-
-
-
-
-
-
-
