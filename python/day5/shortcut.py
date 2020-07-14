@@ -12,12 +12,13 @@ def makeInf(paht:dict)->int:
         length.extend(list(route.values()))
     return max(length) + 10 # 현재 값에서 가장 긴 길의 가중치는 11이고 이에 따른 inf 값은 21이다 
 
-def dijkstra(path: dict, start, end)->int:
+def dijkstra(path: dict, start, end)->int or str:
 
-    inf = makeInf(path) # inf 값 생성
+    # inf = makeInf(path) # inf 값 생성
 
     # 최단거리 저장을 위한 dist 생성
-    dist = {vertex: inf for vertex in path}
+    #dist = {vertex: inf for vertex in path}
+    dist = {vertex: 'inf' for vertex in path}
 
     # 계산한 노드인지 체크하기 위한 dict 생성
     # False = 체크하지 않은 노드, True = 체크한 노드
@@ -28,7 +29,7 @@ def dijkstra(path: dict, start, end)->int:
     nodeQueue = Queue()
 
     nodeQueue.put(start) # 출발지점 이름을 큐에 집어넣는다.
-    nodeCheck[start] = True
+    nodeCheck[start] = True # 출발지점을 확인했음을 체크한다.
     dist[start] = 0 # 출발지 -> 출발지 최단거리를 0으로 설정한다.
 
     while nodeQueue.empty() != True:
@@ -38,18 +39,25 @@ def dijkstra(path: dict, start, end)->int:
         tempPath = sortPath(path,nodeName)
 
         for key, value in tempPath.items(): # 꺼낸 노드와 연결된 노드를 경로가 짧은 순서대로 이름을 넣는다.
-            if nodeCheck[key] != True:
+            if nodeCheck[key] != True: # 이미 확인한 노드인 경우 건너뛴다
                 nodeQueue.put(key)
                 nodeCheck[key] = True # 큐에 넣은 노드를 체크한다.
         
             # 최단거리 계산 : min(dist[A] + D[A][B], dist[B]) (현재 노드까지 최단거리 + 다음 노드까지 거리와 기존 다음 노드까지 최단거리)
-            dist[key] = min(dist[nodeName] + value, dist[key])
-
-    return dist[end]
+            if value == 'inf':
+                continue
+            elif dist[key] == 'inf':
+                dist[key] = dist[nodeName] + value
+            else:
+                dist[key] = min(dist[nodeName] + value, dist[key])
+    if dist[end] == 'inf':
+        return "경로가 없습니다"
+    else:
+        return dist[end]
 # 경로
-# path = { "집": {"미용실":5, "슈퍼마켓":10, "학원":9}, "미용실": {"집":5, "슈퍼마켓": 3, "은행":11}, "슈퍼마켓": {"집":10, "미용실":3, "레스토랑":3, "은행":10, "학원":7}, "학원": {"집":9, "슈퍼마켓":7, "커피숍":8}, "은행": {"미용실":11, "슈퍼마켓":10, "커피숍":5}, "레스토랑": {"슈퍼마켓":3, "커피숍":3}, "커피숍": {"레스토랑":3, "은행":5, "학원":8} }
+path = { "집": {"미용실":5, "슈퍼마켓":10, "학원":9}, "미용실": {"집":5, "슈퍼마켓": 3, "은행":11}, "슈퍼마켓": {"집":10, "미용실":3, "레스토랑":3, "은행":10, "학원":7}, "학원": {"집":9, "슈퍼마켓":7, "커피숍":8}, "은행": {"미용실":11, "슈퍼마켓":10, "커피숍":5}, "레스토랑": {"슈퍼마켓":3, "커피숍":3}, "커피숍": {"레스토랑":3, "은행":5, "학원":8} }
 
-path = {'집':{'학원':1},'학원':{'식당':3,'카페':8},'식당':{'집':2,'레스토랑':4,'카페':7},'레스토랑':{'식당':5,'카페':6},'카페':{}}
+# path = {'집':{'학원':1},'학원':{'식당':3,'카페':8},'식당':{'집':2,'레스토랑':4,'카페':7},'레스토랑':{'식당':5,'카페':6},'카페':{}}
 
 # 출발지와 도착지를 결정
 while True:
