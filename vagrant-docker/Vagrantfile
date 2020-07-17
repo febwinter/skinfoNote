@@ -5,7 +5,7 @@ Vagrant.configure("2") do |config|
     cfg.vm.provider:virtualbox do |vb|
         vb.name="node1"
         vb.customize ["modifyvm", :id, "--cpus", 2]
-        vb.customize ["modifyvm", :id, "--memory", 2048]
+        vb.customize ["modifyvm", :id, "--memory", 1024]
     end
     cfg.vm.host_name="node1"
     cfg.vm.synced_folder ".", "/vagrant", type: "nfs"
@@ -14,6 +14,8 @@ Vagrant.configure("2") do |config|
     cfg.vm.network "forwarded_port", guest: 8080, host: 18080
     cfg.vm.network "forwarded_port", guest: 80, host: 18000
     cfg.vm.network "forwarded_port", guest: 3306, host: 13306
+    cfg.vm.network "forwarded_port", guest: 9000, host: 19000
+    cfg.vm.network "forwarded_port", guest: 8000, host: 18880
     cfg.vm.provision "shell", path: "bash_ssh_conf_4_CentOS.sh"
   end
 
@@ -23,7 +25,7 @@ Vagrant.configure("2") do |config|
     cfg.vm.provider:virtualbox do |vb|
         vb.name="node2"
         vb.customize ["modifyvm", :id, "--cpus", 2]
-        vb.customize ["modifyvm", :id, "--memory", 2048]
+        vb.customize ["modifyvm", :id, "--memory", 1024]
     end
     cfg.vm.host_name="node2"
     cfg.vm.synced_folder ".", "/vagrant", type: "nfs"
@@ -32,6 +34,8 @@ Vagrant.configure("2") do |config|
     cfg.vm.network "forwarded_port", guest: 8080, host: 28080
     cfg.vm.network "forwarded_port", guest: 80, host: 28000
     cfg.vm.network "forwarded_port", guest: 3306, host: 23306
+    cfg.vm.network "forwarded_port", guest: 9000, host: 29000
+    cfg.vm.network "forwarded_port", guest: 8000, host: 28880
     cfg.vm.provision "shell", path: "bash_ssh_conf_4_CentOS.sh"
   end
 
@@ -41,7 +45,7 @@ Vagrant.configure("2") do |config|
     cfg.vm.provider:virtualbox do |vb|
         vb.name="node3"
         vb.customize ["modifyvm", :id, "--cpus", 2]
-        vb.customize ["modifyvm", :id, "--memory", 2048]
+        vb.customize ["modifyvm", :id, "--memory", 1024]
     end
     cfg.vm.host_name="node3"
     cfg.vm.synced_folder ".", "/vagrant", type: "nfs"
@@ -50,23 +54,29 @@ Vagrant.configure("2") do |config|
     cfg.vm.network "forwarded_port", guest: 8080, host: 38080
     cfg.vm.network "forwarded_port", guest: 80, host: 38000
     cfg.vm.network "forwarded_port", guest: 3306, host: 33306
+    cfg.vm.network "forwarded_port", guest: 9000, host: 39000
+    cfg.vm.network "forwarded_port", guest: 8000, host: 38880
     cfg.vm.provision "shell", path: "bash_ssh_conf_4_CentOS.sh"
   end
 
   # Ansible Server (master)
-  config.vm.define:"ansible-server" do |cfg|
+  config.vm.define:"manager" do |cfg|
     cfg.vm.box = "centos/7"
     cfg.vm.provider:virtualbox do |vb|
-        vb.name="Ansible-Server"
+        vb.name="manager"
         vb.customize ["modifyvm", :id, "--cpus", 2]
-        vb.customize ["modifyvm", :id, "--memory", 2048]
+        vb.customize ["modifyvm", :id, "--memory", 1024]
     end
-    cfg.vm.host_name="ansible-server"
+    cfg.vm.host_name="manager"
     cfg.vm.synced_folder ".", "/vagrant", type: "nfs"
-    cfg.vm.network "private_network", ip: "192.168.56.10", bridge: "en0: Wi-Fi (AirPort)"
+    cfg.vm.network "private_network", ip: "192.168.56.14", bridge: "en0: Wi-Fi (AirPort)"
     cfg.vm.network "forwarded_port", guest: 22, host: 19214, auto_correct: false, id: "ssh"
     cfg.vm.network "forwarded_port", guest: 8080, host: 48080
-    cfg.vm.network "forwarded_port", guest: 8001, host: 48001
+    cfg.vm.network "forwarded_port", guest: 80, host: 48000
+    cfg.vm.network "forwarded_port", guest: 3306, host: 43306
+    cfg.vm.network "forwarded_port", guest: 9000, host: 49000
+    cfg.vm.network "forwarded_port", guest: 8000, host: 48880
+    cfg.vm.provision "shell", path: "bash_ssh_conf_4_CentOS.sh"
 
     # cfg.vm.provision "shell", path: "bootstrap.sh"
     # cfg.vm.provision "file", source: "Ansible_env_ready2.yml", destination: "Ansible_env_ready.yml"
