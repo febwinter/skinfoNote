@@ -25,6 +25,11 @@ pip3 install prettytable
 import os
 import pymysql
 from prettytable import PrettyTable 
+import customerMenu
+import carMenu
+
+
+##################################################################################################
 
 # 메인 메뉴
 '''
@@ -75,7 +80,9 @@ def Main_Menu(curs)-> bool:
         return True
     elif sel == 5:
         return False
-        
+
+#################################################################################################
+
 # 1. 고객 관리
 # 1-1. 고객 등록 - 목록에 고객 인적사항 추가
 # 1-2. 고객 조회 - 고객 목록을 테이블에서 가져와 출력
@@ -125,7 +132,8 @@ def CRUD_Customer(curs):
 
     return 0
 
-    
+##################################################################################################
+
 # 2. 차량 관리
 def CRUD_Car(curs):
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -171,21 +179,27 @@ def CRUD_Car(curs):
     
     return 0
 
+###################################################################################################
+
 # 3. 차량 구매
 def Purchase_Car(curs):
     print('차량 구매 메뉴입니다')
     return 0
+
+###################################################################################################
 
 # 4. 차량 서비스
 def Service_Car(curs):
     print('차량 수비 서비스 입니다')
     return 0
 
-
+###################################################################################################
 
 # Database Connect Function
 def DB_Connection(host:str, port:int, user:str, password:str, db:str, charset:str):
     return pymysql.connect(host=host,port=port,user=user,password=password,db=db,charset=charset)
+
+###################################################################################################
 
 # Query Print Function
 def Show_DB(curs,query:str):
@@ -202,7 +216,7 @@ def Show_DB(curs,query:str):
     
     print(t)
 
-######################################################################################################################
+###################################################################################################
 
 # 데이터베이스 연결
 con = DB_Connection('localhost',3306,'root','password','repl_db','utf8')
