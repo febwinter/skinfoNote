@@ -132,6 +132,7 @@ def CRUD_Customer(conn, curs):
         return True
     elif sel == 4:
         # 고객 정보 삭제
+        CustDrop(conn,curs)
         return True
     elif sel == 5:
         # 뒤로가기
@@ -173,8 +174,6 @@ def CustSearch(conn, curs):
         loop_checker = SearchTable(conn, curs, "select * from Customer c where c.customer_id like '%{0}%' or c.name like '%{0}%' or c.phone like '%{0}%' or c.e_mail like '%{0}%';",'need type')
 
 ##################################################################################################
-
-
 # 1-3 고객 정보 갱신
 
 def CustUpdate(conn, curs):
@@ -182,20 +181,21 @@ def CustUpdate(conn, curs):
     
     idNum = -1
     loop_checker = True
+    errChecker = False
 
     while loop_checker:
         try:
             loop_checker, resultList = SearchTable(conn, curs, "select * from Customer c where c.customer_id like '%{0}%' or c.name like '%{0}%' or c.phone like '%{0}%' or c.e_mail like '%{0}%';",'need type')
             if loop_checker == False:
                 raise Exception
-        except:
+        except Exception as ex:
             # 미리 나갈수 있는 분기
             break
 
         # 검색 결과가 여러개인 경우 --> 결과 내 재검색
         if len(resultList) > 1:
             print('-'*50)
-            print('{:^50s}'.format("<<결과 내 재검색>> 검색 내용에 중복되는 검색 결과가 존재합니다"))
+            print('{:^50s}'.format("\n<<결과 내 재검색>> 검색 내용에 중복되는 검색 결과가 존재합니다\n"))
             print('-'*50)
             while True:
                 try:
@@ -211,15 +211,20 @@ def CustUpdate(conn, curs):
                     break
                 
                 except:
-                    print('<<유효한 값을 입력해 주세요>>')
+                    print('\n<<유효한 값을 입력해 주세요>>\n')
         
+        # 검색 데이터가 없는 경우
+        elif len(resultList) < 1:
+            print('\n<<검색 데이터가 없습니다>>\n')
+            errChecker = True
+
         # 검색 결과가 하나인 경우
         else:
             idNum = resultList[0][0]
         
         # 고객정보 갱신 부분 (name, phone, address, e_mail)
-        if idNum != -1:
-            print("<<해당 고객에 대한 고객 정보 갱신을 시작합니다>>")
+        if idNum != -1 and errChecker == False:
+            print("\n<<해당 고객에 대한 고객 정보 갱신을 시작합니다>>\n")
             while True:
                 try:
                     u_name = input('name : ')
@@ -228,19 +233,88 @@ def CustUpdate(conn, curs):
                     u_e_mail = input('e-mail : ')
                     break
                 except:
-                    print("유효한 값을 입력하세요")
+                    print("\n<<유효한 값을 입력하세요>>\n")
             try:
-                curs.execute("update Customer set (name,phone,address,e_mail) = ('{}','{}','{}','{}') where customer_id={}".format(u_name,u_phone,u_address,u_e_mail,idNum))
+                curs.execute("update Customer set name='{}',phone='{}',address='{}',e_mail='{}' where customer_id={}".format(u_name,u_phone,u_address,u_e_mail,idNum))
                 conn.commit()
+
+                Show_DB(curs,"select * from Customer c where c.customer_id={}".format(idNum))
+                print('\n<<업데이트 성공!>>\n')
                 break
             except Exception as ex:
                 print('\n<<업데이트에 실패했습니다>>\n')
                 print(ex)
             
-            Show_DB(curs,"select * from Customer c where c.customer_id like {}".format(idNum))
-            print('\n<<업데이트 성공!>>\n')
         else:
-            print('<<업데이트를 취소했습니다>>\n\n')
+            print('\n\n<<업데이트를 취소했습니다>>\n\n')
+
+
+##################################################################################################
+# 1-4 고객정보 삭제
+
+def CustDrop(conn,curs):
+    print('\n고객 정보 삭제 메뉴입니다\n')
+    
+    idNum = -1
+    loop_checker = True
+    errChecker = False
+
+    while loop_checker:
+        try:
+            loop_checker, resultList = SearchTable(conn, curs, "select * from Customer c where c.customer_id like '%{0}%' or c.name like '%{0}%' or c.phone like '%{0}%' or c.e_mail like '%{0}%';",'need type')
+            if loop_checker == False:
+                raise Exception
+        except Exception as ex:
+            # 미리 나갈수 있는 분기
+            print(ex)
+            break
+
+        # 검색 결과가 여러개인 경우 --> 결과 내 재검색
+        if len(resultList) > 1:
+            print('-'*50)
+            print('{:^50s}'.format("\n<<결과 내 재검색>> 검색 내용에 중복되는 검색 결과가 존재합니다\n"))
+            print('-'*50)
+            while True:
+                try:
+                    idNum = int(input('\n ** 검색 결과 중 해당하는 고객 id (customer_id)를 입력해주세요, 없다면 -1을 입력해 주세요 : '))
+                    if idNum == -1:
+                        break
+                    elif idNum in [resultList[i][0] for i in range(len(resultList))]:
+                        pass
+                    else:
+                        raise Exception
+                    
+                    resultList = Show_DB(curs,"select * from Customer c where c.customer_id like {}".format(idNum))
+                    break
+                
+                except:
+                    print('\n<<유효한 값을 입력해 주세요>>\n')
+        
+        # 검색 데이터가 없는 경우
+        elif len(resultList) < 1:
+            print('\n<<검색 데이터가 없습니다>>\n')
+            errChecker = True
+
+        # 검색 결과가 하나인 경우
+        else:
+            idNum = resultList[0][0]
+        
+        # 고객정보 삭제 부분
+        if idNum != -1 and errChecker == False:
+            print("\n<<해당 고객에 대한 고객 정보 삭제을 시작합니다>>\n")
+            
+            try:
+                curs.execute("delete from Customer where customer_id={};".format(idNum))
+                conn.commit()
+                print('\n<< 성공!>>\n')
+                break
+            except Exception as ex:
+                print('\n<<삭제 실패!>>\n')
+                print(ex)
+            
+        else:
+            print('\n\n<<정보 삭제를 취소했습니다>>\n\n')
+
 
 
 ##################################################################################################
@@ -279,21 +353,43 @@ def CRUD_Car(conn, curs):
             
     if sel == 1:
         # 차량 등록
+        CarReg(conn,curs)
         return True
     elif sel == 2:
         # 차량 정보 조회
+        CarSearch(conn,curs)
         return True
     elif sel == 3:
         # 차량 정보 갱신
+        CarUpdate(conn,curs)
         return True
     elif sel == 4:
         # 차량 정보 삭제
+        CarDrop(conn,curs)
         return True
     elif sel == 5:
         # 뒤로가기
         return False
     
     return 0
+
+###################################################################################################
+# 2-1 차량 등록
+def CarReg(conn,curs):
+    return 0
+###################################################################################################
+# 2-2 차량 정보 조회
+def CarSearch(conn,curs):
+    return 0
+###################################################################################################
+# 2-3 차량 정보 갱신
+def CarUpdate(conn,curs):
+    return 0
+###################################################################################################
+# 2-4 차량 정보 삭제
+def CarDrop(conn,curs):
+    return 0
+
 
 ###################################################################################################
 
@@ -350,11 +446,11 @@ def SearchTable(conn, curs, searchSql:str, keyword):
             print('{:^50s}'.format("검색 결과"))
             print('-'*50)
             resultList = Show_DB(curs,searchSql.format(keyword))
-            print('검색 결과 갯수 : {}'.format(len(resultList)))
-            print('\n')
+            print('검색 결과 갯수 : {}\n'.format(len(resultList)))
             return True, resultList
-    except:
-        print('{:^50s}'.format('\n<<<오류가 발생했습니다. 적절한 값을 입력해주세요>>>\n'))
+    except Exception as ex:
+        print('{:^50s}'.format('\n<<<오류가 발생했습니다. 적절한 검색 값을 입력해주세요>>>\n'))
+        print(ex)
         return True
 
 ###################################################################################################
