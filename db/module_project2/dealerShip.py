@@ -14,6 +14,10 @@
         * (고객 ID, 차량 시리얼넘버, 예약 날짜, 정비공) 으로 신청
 
         * 신청 목록 조회 (사용자 ID or 차량 시리얼넘버로 검색 가능하게)
+
+(추가)
+- 정비공 CRUD
+- 부품 CRUD
 '''
 # 필요 파이썬 모듈
 '''
@@ -25,8 +29,8 @@ pip3 install prettytable
 import os
 import pymysql
 from prettytable import PrettyTable 
-import customerMenu
-import carMenu
+# import customerMenu
+# import carMenu
 
 
 ##################################################################################################
@@ -35,7 +39,7 @@ import carMenu
 '''
 메인 메뉴 설정
 '''
-def Main_Menu(curs)-> bool:
+def Main_Menu(conn,curs)-> bool:
     
     # 제목 출력
     print('+'*50)
@@ -67,16 +71,16 @@ def Main_Menu(curs)-> bool:
             print('유효한 값을 입력해주세요')
             
     if sel == 1:
-        CRUD_Customer(curs)
+        CRUD_Customer(conn, curs)
         return True
     elif sel == 2:
-        CRUD_Car(curs)
+        CRUD_Car(conn, curs)
         return True
     elif sel == 3:
-        Purchase_Car(curs)
+        Purchase_Car(conn, curs)
         return True
     elif sel == 4:
-        Service_Car(curs)
+        Service_Car(conn, curs)
         return True
     elif sel == 5:
         return False
@@ -89,7 +93,7 @@ def Main_Menu(curs)-> bool:
 # 1-3. 고객 갱신 - 특정 고객 인적사항 수정
 # 1-4. 고객 삭제 - 목록에서 특정 고객 인적사항 삭제
 
-def CRUD_Customer(curs):
+def CRUD_Customer(conn, curs):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('고객 관련 메뉴입니다')
     print("""
@@ -116,12 +120,15 @@ def CRUD_Customer(curs):
             
     if sel == 1:
         # 고객 등록
+        CustReg(conn, curs)
         return True
     elif sel == 2:
         # 고객 정보 조회
+        CustSearch(conn,curs)
         return True
     elif sel == 3:
         # 고객 정보 갱신
+        CustUpdate(conn,curs)
         return True
     elif sel == 4:
         # 고객 정보 삭제
@@ -134,8 +141,117 @@ def CRUD_Customer(curs):
 
 ##################################################################################################
 
+# 1-1 고객 등록
+# insert into Customer (name, phone, address, e_mail) values('Arron', '010-0000-0000', 'seoul', 'arron@abc.com');
+def CustReg(conn, curs):
+    print('고객 등록 관련 메뉴입니다\n')
+    while True:
+        print('등록할 고객 정보를 입력해주세요\n')
+
+        try:
+            name = input('이름 : ')
+            phone = input("전화번호('-'를 포함) : ")
+            address = input('주소 : ')
+            mail = input('email : ')
+            insertSql = "insert into Customer(name, phone, address, e_mail) values('{}','{}','{}','{}');".format(name, phone, address, mail)
+            curs.execute(insertSql)
+            conn.commit()
+            print('\n등록되었습니다!\n')
+            Show_DB(curs,"select * from Customer where name like '{}' and phone like '{}';".format(name,phone))
+            break
+        except:
+            print('\n유효한 값을 입력해주세요 (45자 이내로 써주세요)\n')
+
+##################################################################################################
+
+# 1-2 고객 정보 조회
+
+def CustSearch(conn, curs):
+    print('고객 검색 관련 메뉴입니다\n')
+    loop_checker = True
+    while loop_checker:
+        loop_checker = SearchTable(conn, curs, "select * from Customer c where c.customer_id like '%{0}%' or c.name like '%{0}%' or c.phone like '%{0}%' or c.e_mail like '%{0}%';",'need type')
+
+##################################################################################################
+
+
+# 1-3 고객 정보 갱신
+
+def CustUpdate(conn, curs):
+    print('\n고객 정보 갱신 메뉴입니다\n')
+    
+    idNum = -1
+    loop_checker = True
+
+    while loop_checker:
+        try:
+            loop_checker, resultList = SearchTable(conn, curs, "select * from Customer c where c.customer_id like '%{0}%' or c.name like '%{0}%' or c.phone like '%{0}%' or c.e_mail like '%{0}%';",'need type')
+            if loop_checker == False:
+                raise Exception
+        except:
+            # 미리 나갈수 있는 분기
+            break
+
+        # 검색 결과가 여러개인 경우 --> 결과 내 재검색
+        if len(resultList) > 1:
+            print('-'*50)
+            print('{:^50s}'.format("<<결과 내 재검색>> 검색 내용에 중복되는 검색 결과가 존재합니다"))
+            print('-'*50)
+            while True:
+                try:
+                    idNum = int(input('\n ** 검색 결과 중 해당하는 고객 id (customer_id)를 입력해주세요, 없다면 -1을 입력해 주세요 : '))
+                    if idNum == -1:
+                        break
+                    elif idNum in [resultList[i][0] for i in range(len(resultList))]:
+                        pass
+                    else:
+                        raise Exception
+                    
+                    resultList = Show_DB(curs,"select * from Customer c where c.customer_id like {}".format(idNum))
+                    break
+                
+                except:
+                    print('<<유효한 값을 입력해 주세요>>')
+        
+        # 검색 결과가 하나인 경우
+        else:
+            idNum = resultList[0][0]
+        
+        # 고객정보 갱신 부분 (name, phone, address, e_mail)
+        if idNum != -1:
+            print("<<해당 고객에 대한 고객 정보 갱신을 시작합니다>>")
+            while True:
+                try:
+                    u_name = input('name : ')
+                    u_phone = input('phone : ')
+                    u_address = input('address : ')
+                    u_e_mail = input('e-mail : ')
+                    break
+                except:
+                    print("유효한 값을 입력하세요")
+            try:
+                curs.execute("update Customer set (name,phone,address,e_mail) = ('{}','{}','{}','{}') where customer_id={}".format(u_name,u_phone,u_address,u_e_mail,idNum))
+                conn.commit()
+                break
+            except Exception as ex:
+                print('\n<<업데이트에 실패했습니다>>\n')
+                print(ex)
+            
+            Show_DB(curs,"select * from Customer c where c.customer_id like {}".format(idNum))
+            print('\n<<업데이트 성공!>>\n')
+        else:
+            print('<<업데이트를 취소했습니다>>\n\n')
+
+
+##################################################################################################
+
 # 2. 차량 관리
-def CRUD_Car(curs):
+# 2-1. 차량 등록 - 목록에 고객 인적사항 추가
+# 2-2. 차량 정보 조회 - 고객 목록을 테이블에서 가져와 출력
+# 2-3. 차량 정보 갱신 - 특정 고객 인적사항 수정
+# 2-4. 차량 정보 삭제 - 목록에서 특정 고객 인적사항 삭제
+
+def CRUD_Car(conn, curs):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('차량 관련 메뉴입니다')
     print("""
@@ -182,14 +298,14 @@ def CRUD_Car(curs):
 ###################################################################################################
 
 # 3. 차량 구매
-def Purchase_Car(curs):
+def Purchase_Car(conn, curs):
     print('차량 구매 메뉴입니다')
     return 0
 
 ###################################################################################################
 
 # 4. 차량 서비스
-def Service_Car(curs):
+def Service_Car(conn, curs):
     print('차량 수비 서비스 입니다')
     return 0
 
@@ -197,7 +313,8 @@ def Service_Car(curs):
 
 # Database Connect Function
 def DB_Connection(host:str, port:int, user:str, password:str, db:str, charset:str):
-    return pymysql.connect(host=host,port=port,user=user,password=password,db=db,charset=charset)
+    con = pymysql.connect(host=host,port=port,user=user,password=password,db=db,charset=charset)
+    return con, con.cursor()
 
 ###################################################################################################
 
@@ -210,18 +327,42 @@ def Show_DB(curs,query:str):
         col.append(col_object[0])
     
     t = PrettyTable(col)
+    resultList = []
     
     for row in curs.fetchall():
         t.add_row(row)
+        resultList.append(row)
     
     print(t)
+    return resultList
+
+##################################################################################################
+# Search Function
+
+def SearchTable(conn, curs, searchSql:str, keyword):
+    try:
+        print('검색어를 입력하세요\n\n')
+        keyword = input("검색어 (종료를 원할시 '끝내기'를 입력해주세요) : ")
+        if keyword == '끝내기':
+            return False, []
+        else:
+            print('-'*50)
+            print('{:^50s}'.format("검색 결과"))
+            print('-'*50)
+            resultList = Show_DB(curs,searchSql.format(keyword))
+            print('검색 결과 갯수 : {}'.format(len(resultList)))
+            print('\n')
+            return True, resultList
+    except:
+        print('{:^50s}'.format('\n<<<오류가 발생했습니다. 적절한 값을 입력해주세요>>>\n'))
+        return True
 
 ###################################################################################################
 
-# 데이터베이스 연결
-con = DB_Connection('localhost',3306,'root','password','repl_db','utf8')
+# 데이터베이스 연결 및 커서 할당
+con, curs = DB_Connection('localhost',3306,'root','password','Car_Dealership','utf8')
 #데이터 변수 조작 커서 할당
-curs = con.cursor()
+# curs = con.cursor()
 
 # 메인 메뉴 호출
 '''
@@ -229,5 +370,6 @@ curs = con.cursor()
 '''
 loop_checker = True
 while loop_checker:
-    loop_checker = Main_Menu(curs)
+    loop_checker = Main_Menu(con,curs)
     print('\n\n\n\n')
+con.close()

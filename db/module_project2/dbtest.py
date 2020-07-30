@@ -20,9 +20,9 @@ conn = pymysql.connect(host='127.0.0.1',
 curs = conn.cursor()
 # print(curs)
 
-# insertSql = 'insert into member(name) values(%s)'
-# curs.execute(insertSql, ('HHH'))
-# conn.commit()
+#insertSql = 'insert into member(name) values({})'.format('WWW')
+#curs.execute(insertSql)
+#conn.commit()
 
 rows = curs.execute('select * from member')
 selectSql = 'select * from member where name like %s'
@@ -31,12 +31,13 @@ col = []
 for col_object in curs.description:
     col.append(col_object[0])
 
-print(col)
+# print(col)
 
 
-#for row in curs.fetchall():
-#    #print(row)
+# for row in curs.fetchall():
+#    print(row)
 #    t.add_row(row)
 
-print(t)
+print(len(curs.fetchall()))
+print(curs.fetchall())
 
