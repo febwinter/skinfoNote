@@ -28,7 +28,8 @@ pip3 install prettytable
 '''
 import os
 import pymysql
-from prettytable import PrettyTable 
+from prettytable import PrettyTable
+from datetime import datetime
 # import customerMenu
 # import carMenu
 
@@ -57,7 +58,11 @@ def Main_Menu(conn,curs)-> bool:
 
 4. 차량 서비스
 
-5. 종료""")
+5. 구매 내역 삭제
+
+6. 종료
+
+""")
 
     while True:
         try:
@@ -77,12 +82,16 @@ def Main_Menu(conn,curs)-> bool:
         CRUD_Car(conn, curs)
         return True
     elif sel == 3:
-        Purchase_Car(conn, curs)
+        Make_Invoice(conn, curs)
         return True
     elif sel == 4:
         Service_Car(conn, curs)
         return True
     elif sel == 5:
+        # 구매 내역 삭제
+        Drop_Invoice(conn, curs)
+        return True
+    elif sel == 6:
         return False
 
 #################################################################################################
@@ -221,7 +230,7 @@ def CustUpdate(conn, curs):
         # 검색 결과가 하나인 경우
         else:
             idNum = resultList[0][0]
-        
+
         # 고객정보 갱신 부분 (name, phone, address, e_mail)
         if idNum != -1 and errChecker == False:
             print("\n<<해당 고객에 대한 고객 정보 갱신을 시작합니다>>\n")
@@ -301,7 +310,7 @@ def CustDrop(conn,curs):
         
         # 고객정보 삭제 부분
         if idNum != -1 and errChecker == False:
-            print("\n<<해당 고객에 대한 고객 정보 삭제을 시작합니다>>\n")
+            print("\n<<해당 고객에 대한 정보 삭제를 시작합니다>>\n")
             
             try:
                 curs.execute("delete from Customer where customer_id={};".format(idNum))
@@ -438,6 +447,167 @@ def CarUpdate(conn,curs):
             print('-'*50)
             while True:
                 try:
+                    idNum = int(input('\n ** 검색 결과 중 해당하는 차량 시리얼 번호(serial_no)를 입력해주세요, 없다면 -1을 입력해 주세요 : '))
+                    if idNum == -1:
+                        break
+                    elif idNum in [resultList[i][0] for i in range(len(resultList))]:
+                        pass
+                    else:
+                        raise Exception
+                    
+                    resultList = Show_DB(curs,"select * from car_list c where c.serial_no like {}".format(idNum))
+                    break
+                
+                except:
+                    print('\n<<유효한 값을 입력해 주세요>>\n')
+        
+        # 검색 데이터가 없는 경우
+        elif len(resultList) < 1:
+            print('\n<<검색 데이터가 없습니다>>\n')
+            errChecker = True
+
+        # 검색 결과가 하나인 경우
+        else:
+            idNum = resultList[0][0]
+        
+        # 차량 정보 갱신 부분 (name, phone, address, e_mail)
+        if idNum != -1 and errChecker == False:
+            print("\n<<해당 차량에 대한 고객 정보 갱신을 시작합니다>>\n")
+            while True:
+                try:
+                    c_seller_id = int(input('판매자 ID : '))
+                    c_model = input("차량 모델 : ")
+                    while True:
+                        try:
+                            temp = input('중고 여부 (신차/중고) : ')
+                            if temp == '신차':
+                                c_used = 'False'
+                            elif temp == '중고':
+                                c_used = 'True'
+                            else:
+                                raise Exception
+                            break
+                        except:
+                            print('\n<<정해진 값 중 선택해 입력해 주세요>>\n')
+                    c_price = int(input('가격 : '))
+                    break
+                except:
+                    print("\n<<유효한 값을 입력하세요>>\n")
+            try:
+                curs.execute("update car_list set seller_id={},model='{}',used={},price={} where serial_no={}".format(c_seller_id,c_model,c_used,c_price,idNum))
+                conn.commit()
+
+                Show_DB(curs,"select * from car_list c where c.serial_no={}".format(idNum))
+                print('\n<<업데이트 성공!>>\n')
+                break
+            except Exception as ex:
+                print('\n<<업데이트에 실패했습니다>>\n')
+                print(ex)
+            
+        else:
+            print('\n\n<<업데이트를 취소했습니다>>\n\n')
+
+
+###################################################################################################
+# 2-4 차량 정보 삭제
+def CarDrop(conn,curs):
+    print('\n차량 정보 삭제 메뉴입니다\n')
+    
+    idNum = -1
+    loop_checker = True
+    errChecker = False
+
+    while loop_checker:
+        try:
+            loop_checker, resultList = SearchTable(conn, curs, "select cl.serial_no, cl.car_model, cl.price, s.name, s.phone, s.store from car_list cl, Seller s where cl.seller_id =s.seller_id and (convert(cl.serial_no, char) like '%{0}%' or cl.car_model like '%{0}%' or convert(cl.price, char) like '%{0}%' or s.name like '%{0}%' or s.phone like '%{0}%' or s.store like '%{0}%') group by cl.serial_no;",'need type')
+            if loop_checker == False:
+                raise Exception
+        except Exception as ex:
+            # 미리 나갈수 있는 분기
+            break
+
+        # 검색 결과가 여러개인 경우 --> 결과 내 재검색
+        if len(resultList) > 1:
+            print('-'*50)
+            print('{:^50s}'.format("\n<<결과 내 재검색>> 검색 내용에 중복되는 검색 결과가 존재합니다\n"))
+            print('-'*50)
+            while True:
+                try:
+                    idNum = int(input('\n ** 검색 결과 중 해당하는 차량 시리얼 번호(serial_no)를 입력해주세요, 없다면 -1을 입력해 주세요 : '))
+                    if idNum == -1:
+                        break
+                    elif idNum in [resultList[i][0] for i in range(len(resultList))]:
+                        pass
+                    else:
+                        raise Exception
+                    
+                    resultList = Show_DB(curs,"select * from car_list c where c.serial_no like {}".format(idNum))
+                    break
+                
+                except:
+                    print('\n<<유효한 값을 입력해 주세요>>\n')
+        
+        # 검색 데이터가 없는 경우
+        elif len(resultList) < 1:
+            print('\n<<검색 데이터가 없습니다>>\n')
+            errChecker = True
+
+        # 검색 결과가 하나인 경우
+        else:
+            idNum = resultList[0][0]
+        
+        # 차량 정보 삭제 부분
+        if idNum != -1 and errChecker == False:
+            print("\n<<해당 차량에 대한 정보 삭제를 시작합니다>>\n")
+            
+            try:
+                curs.execute("delete from car_list where customer_id={};".format(idNum))
+                conn.commit()
+                print('\n<< 성공!>>\n')
+                break
+            except Exception as ex:
+                print('\n<<삭제 실패!>>\n')
+                print(ex)
+            
+        else:
+            print('\n\n<<정보 삭제를 취소했습니다>>\n\n')        
+
+
+###################################################################################################
+
+# 3. 차량 구매
+'''
+3-1. 고객 검색 및 선택
+3-2. 살수있는 차량 검색 및 선택
+3-3. 날짜 추가해서 insert
+'''
+def Make_Invoice(conn, curs):
+    print('\n차량 구매 메뉴입니다\n')
+    
+    # 차량을 구매한 고객 검색
+    print('차량을 구매할 고객을 검색합니다\n')
+    idNum = -1
+    loop_checker = True
+    errChecker = False
+
+    # 고객 검색
+    while loop_checker:
+        try:
+            loop_checker, resultList = SearchTable(conn, curs, "select * from Customer c where c.customer_id like '%{0}%' or c.name like '%{0}%' or c.phone like '%{0}%' or c.e_mail like '%{0}%';",'need type')
+            if loop_checker == False:
+                raise Exception
+        except Exception as ex:
+            # 미리 나갈수 있는 분기
+            print(ex)
+            break
+
+        # 검색 결과가 여러개인 경우 --> 결과 내 재검색
+        if len(resultList) > 1:
+            print('-'*50)
+            print('{:^50s}'.format("\n<<결과 내 재검색>> 검색 내용에 중복되는 검색 결과가 존재합니다\n"))
+            print('-'*50)
+            while True:
+                try:
                     idNum = int(input('\n ** 검색 결과 중 해당하는 고객 id (customer_id)를 입력해주세요, 없다면 -1을 입력해 주세요 : '))
                     if idNum == -1:
                         break
@@ -461,46 +631,146 @@ def CarUpdate(conn,curs):
         else:
             idNum = resultList[0][0]
         
-        # 고객정보 갱신 부분 (name, phone, address, e_mail)
-        if idNum != -1 and errChecker == False:
-            print("\n<<해당 고객에 대한 고객 정보 갱신을 시작합니다>>\n")
+        # 구매 가능한 차량 검색 및 선택
+        if idNum != -1 and errChecker == False: 
+            print('\n해당 고객을 구매자로 지정합니다\n')
+        else:
+            print('\n구매를 취소했습니다\n')
+        
+        # 차량 검색
+        print('\n구매할 차량을 검색합니다\n')
+        errChecker = False
+        print("** 구매 가능 차량 목록 **")
+        showSql = "select cl.serial_no, cl.car_model, cl.used, cl.price, s.name, s.phone from car_list cl, Seller s where cl.seller_id= s.seller_id and cl.serial_no not in (select i.car_serial_no from Invoice i, car_list cl where i.car_serial_no = cl.serial_no);"
+        Show_DB(curs,showSql)
+        
+        try:
+            loop_checker, resultList = SearchTable(conn, curs, "SELECT cl.serial_no, cl.car_model, cl.used, cl.price, s.name, s.phone from car_list cl left join Seller s  on cl.seller_id=s.seller_id where cl.serial_no not in (select i.car_serial_no from Invoice i, car_list cl2 where i.car_serial_no = cl2.serial_no) and ((convert(cl.serial_no, char) like '%{0}%' or cl.car_model like '%{0}%' or convert(cl.price, char) like '%{0}%' or s.name like '%{0}%' or s.phone like '%{0}%'));",'need type')
+            if loop_checker == False:
+                raise Exception
+        except Exception as ex:
+            # 미리 나갈수 있는 분기
+            break
+
+        # 검색 결과가 여러개인 경우 --> 결과 내 재검색
+        if len(resultList) > 1:
+            print('-'*50)
+            print('{:^50s}'.format("\n<<결과 내 재검색>> 검색 내용에 중복되는 검색 결과가 존재합니다\n"))
+            print('-'*50)
             while True:
                 try:
-                    u_name = input('name : ')
-                    u_phone = input('phone : ')
-                    u_address = input('address : ')
-                    u_e_mail = input('e-mail : ')
+                    c_idNum = int(input('\n ** 검색 결과 중 해당하는 차량 시리얼 번호(serial_no)를 입력해주세요, 없다면 -1을 입력해 주세요 : '))
+                    if c_idNum == -1:
+                        break
+                    elif c_idNum in [resultList[i][0] for i in range(len(resultList))]:
+                        pass
+                    else:
+                        raise Exception
+                    
+                    resultList = Show_DB(curs,"select * from car_list c where c.serial_no like {}".format(c_idNum))
                     break
+                
                 except:
-                    print("\n<<유효한 값을 입력하세요>>\n")
-            try:
-                curs.execute("update Customer set name='{}',phone='{}',address='{}',e_mail='{}' where customer_id={}".format(u_name,u_phone,u_address,u_e_mail,idNum))
-                conn.commit()
-
-                Show_DB(curs,"select * from Customer c where c.customer_id={}".format(idNum))
-                print('\n<<업데이트 성공!>>\n')
-                break
-            except Exception as ex:
-                print('\n<<업데이트에 실패했습니다>>\n')
-                print(ex)
+                    print('\n<<유효한 값을 입력해 주세요>>\n')
+        
+        # 검색 데이터가 없는 경우
+        elif len(resultList) < 1:
+            print('\n<<검색 데이터가 없습니다>>\n')
+            errChecker = True
             
+        # 검색 결과가 하나인 경우
         else:
-            print('\n\n<<업데이트를 취소했습니다>>\n\n')
+            c_idNum = resultList[0][0]
 
+        # 시리얼 넘버, 고객 아이디, 날짜
+        # 차량 serial number = c_idNum
+        # 고객 id = idNum
+
+        # 날짜 추가해 invoice 테이블에 insert
+        now = datetime.now()
+        pur_date = now.strftime('%Y-%m-%d')
+        try:
+            insertSql = "insert into Invoice values({}, {}, '{}');".format(c_idNum, idNum, pur_date)
+            curs.execute(insertSql)
+            conn.commit()
+        except:
+            print('invoice insert fail')
+        print('\n구매 완료!\n')
+        try:
+            Show_DB(curs,"select * from Invoice where car_serial_no like {}".format(c_idNum))
+        except:
+            print('show db fail')
+        break
 
 ###################################################################################################
-# 2-4 차량 정보 삭제
-def CarDrop(conn,curs):
-    print(Get_Inserted_id(curs))
+
+# def Drop_Invoice(conn,cur):
+#     print('\n구매 정보 삭제 메뉴입니다\n')
+    
+#     idNum = -1
+#     loop_checker = True
+#     errChecker = False
+
+#     while loop_checker:
+        
+#         print('** 차량 시리얼 번호로 검색해주세요! **')
+        
+#         try:
+#             loop_checker, resultList = SearchTable(conn, curs, "select * from Invoice c where convert(c.car_serial_no, char) like '%{0}%';",'need type')
+#             if loop_checker == False:
+#                 raise Exception
+#         except Exception as ex:
+#             # 미리 나갈수 있는 분기
+#             print(ex)
+#             break
+
+#         # 검색 결과가 여러개인 경우 --> 결과 내 재검색
+#         if len(resultList) > 1:
+#             print('-'*50)
+#             print('{:^50s}'.format("\n<<결과 내 재검색>> 검색 내용에 중복되는 검색 결과가 존재합니다\n"))
+#             print('-'*50)
+#             while True:
+#                 try:
+#                     idNum = int(input('\n ** 검색 결과 중 해당하는 차량 시리얼 번호(car_serial_no)를 입력해주세요, 없다면 -1을 입력해 주세요 : '))
+#                     if idNum == -1:
+#                         break
+#                     elif idNum in [resultList[i][0] for i in range(len(resultList))]:
+#                         pass
+#                     else:
+#                         raise Exception
+                    
+#                     resultList = Show_DB(curs,"select * from Invoice c where c.car_serial_no like {}".format(idNum))
+#                     break
+                
+#                 except:
+#                     print('\n<<유효한 값을 입력해 주세요>>\n')
+        
+#         # 검색 데이터가 없는 경우
+#         elif len(resultList) < 1:
+#             print('\n<<검색 데이터가 없습니다>>\n')
+#             errChecker = True
+
+#         # 검색 결과가 하나인 경우
+#         else:
+#             idNum = resultList[0][0]
+        
+#         # 고객정보 삭제 부분
+#         if idNum != -1 and errChecker == False:
+#             print("\n<<해당 차량에 대한 구매 정보 삭제를 시작합니다>>\n")
+            
+#             try:
+#                 curs.execute("delete from Invoice c where c.car_serial_no={};".format(idNum))
+#                 conn.commit()
+#                 print('\n<< 성공!>>\n')
+#                 break
+#             except Exception as ex:
+#                 print('\n<<삭제 실패!>>\n')
+#                 print(ex)
+            
+#         else:
+#             print('\n\n<<정보 삭제를 취소했습니다>>\n\n')
 
 
-
-###################################################################################################
-
-# 3. 차량 구매
-def Purchase_Car(conn, curs):
-    print('차량 구매 메뉴입니다')
-    return 0
 
 ###################################################################################################
 
