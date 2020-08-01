@@ -1,0 +1,19 @@
+version: "3"
+services: 
+  python:
+    container_name: pythontest
+    image: pythontest:v1.0
+    command:
+      - tail -f /dev/null
+  
+  # mysql:
+  #   container_name: mysqltest
+  #   image: mysqltest:v1.0
+  #   restart: always
+  #   ports:
+  #     - 3306:3306
+  #   environment:
+  #     - MYSQL_USER=root
+  #     - MYSQL_PASSWORD=root
+  #     - MYSQL_DATABASE=test1
+  #     - MYSQL_ALLOW_EMPTY_PASSWORD=yes
