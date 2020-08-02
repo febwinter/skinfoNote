@@ -1,0 +1,34 @@
+version: "3"
+
+services: 
+  python:
+    container_name: python_dealership
+    image: pathfindersnpy/pydealership:1.0
+    # network_mode: bridge
+    networks: 
+      - dbnetwork
+  
+  mysql:
+    container_name: dealership
+    image: pathfindersnpy/dealership:1.0
+    restart: always
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=car_test
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    #   network_mode: bridge
+      networks:
+      - dbnetwork
+    expose: 
+      - 3306
+
+networks:
+  dbnetwork:
+    driver: bridge
+    driver_opts: 
+      subnet: "255.255.255.0"
+      IDAddress: "20.20.8.1"
+    
