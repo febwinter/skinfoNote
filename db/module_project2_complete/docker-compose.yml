@@ -20,7 +20,7 @@ services:
       - MYSQL_DATABASE=car_test
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
     #   network_mode: bridge
-      networks:
+    networks:
       - dbnetwork
     expose: 
       - 3306
