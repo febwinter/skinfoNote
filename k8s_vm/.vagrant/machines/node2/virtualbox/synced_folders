@@ -1,0 +1,1 @@
+{"nfs":{"/vagrant":{"type":"nfs","guestpath":"/vagrant","hostpath":"/Users/haeinnkim/skinfoNote/k8s_vm","disabled":false,"__vagrantfile":true,"map_uid":501,"map_gid":20,"nfs_version":3,"nfs_udp":true,"uuid":"142550902"}}}
